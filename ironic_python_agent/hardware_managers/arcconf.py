@@ -3,7 +3,6 @@ from oslo_log import log
 
 from ironic_python_agent import utils
 from ironic_python_agent import hardware
-from ironic_python_agent.hardware_managers.pmc import string_to_num
 from math import fabs
 
 LOG = log.getLogger()
