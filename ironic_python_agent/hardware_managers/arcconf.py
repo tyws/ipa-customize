@@ -72,14 +72,14 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
             LOG.debug('Get Adapter Info:%s', clounms[2])
             adaptercount = int(clounms[1].split()[0])
             if adaptercount != 0:
-                return False
-            else:
                 return True
+            else:
+                return False
         except Exception:
             return False
 
     def evaluate_hardware_support(self):
-        if _detect_raid_card():
+        if self._detect_raid_card():
             LOG.debug('Found ARCCONF Raid card')
             return hardware.HardwareSupport.MAINLINE
         else:
@@ -128,9 +128,9 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
                 controller = vdriver['controller']
             if vdriver.has_key('is_root_volume'):
                 is_root_volume = vdriver['is_root_volume']
-            LOG.info(('Raid Configuration:[size:%s, raid_level:%s, '
-                      'p_disks:%s, controller:%s]'),
-                     size, raid_level, physical_disks, controller)
+            LOG.info('Raid Configuration:[size:%s, raid_level:%s, '
+                     'p_disks:%s, controller:%s]' %
+                     (size, raid_level, physical_disks, controller))
             disklist = " "
             for i in range(0, len(physical_disks)):
                 if i == 0:
@@ -153,15 +153,17 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
 
         return target_raid_config
 
-    def delete_configuration(self):
-        controller = 1
-        cmd = ('%s delete ' % ARCCONF) + controller + ' ALL noprompt'
+    def delete_configuration(self, node, ports):
+        controller = '1'
+        cmd = ('%s delete ' % ARCCONF) + controller + ' LOGICALDRIVE ALL noprompt'
         report, _e = utils.execute(cmd, shell=True)
+        return
 
     def list_physical_devices(self):
         devices = []
         controller = '1'
-        report, _e = utils.execute('%s getconfig ' + controller + ' pd')
+        report, _e = utils.execute(('%s getconfig ' %
+                                    ARCCONF + controller + ' pd'), shell=True)
         lines = report.split('\n')
         i = 0
         while i in range(0, len(lines)):
