@@ -111,6 +111,7 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
         target_raid_config_list = target_raid_config['logical_disks']
 
         LOG.info('Begin to create configuration')
+        ld_num = 0
         for vdriver in target_raid_config_list:
             size = 'MAX'
             raid_level = None
@@ -120,6 +121,7 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
 
             if vdriver.has_key('size_gb'):
                 size = vdriver['size_gb']
+                target_raid_config['logical_disks'][ld_num]['size_gb']=0
             if vdriver.has_key('raid_level'):
                 raid_level = vdriver['raid_level']
             if vdriver.has_key('physical_disks'):
@@ -141,6 +143,7 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
             cmd = ('%s create ' % ARCCONF) + controller \
                 + ' LOGICALDRIVE ' + size + ' ' + raid_level \
                 + ' ' + disklist + ' noprompt'
+            ld_num += 1
             if raid_level is not None and physical_disks \
                     is not None and controller is not None:
                 LOG.info('Raid Configuration Command:%s', cmd)
