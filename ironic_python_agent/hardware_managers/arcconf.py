@@ -99,7 +99,7 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
         hardware_info['interfaces'] = self.list_network_interfaces()
         hardware_info['cpu'] = self.get_cpus()
         hardware_info['disks'] = self.list_block_devices()
-        hardware_info['physicl_disks'] = self.list_physical_devices()
+        hardware_info['physical_disks'] = self.list_physical_devices()
         hardware_info['memory'] = self.get_memory()
         hardware_info['bmc_address'] = self.get_bmc_address()
         hardware_info['system_vendor'] = self.get_system_vendor_info()
@@ -121,7 +121,6 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
 
             if vdriver.has_key('size_gb'):
                 size = vdriver['size_gb']
-                target_raid_config['logical_disks'][ld_num]['size_gb']=0
             if vdriver.has_key('raid_level'):
                 raid_level = vdriver['raid_level']
             if vdriver.has_key('physical_disks'):
@@ -143,11 +142,18 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
             cmd = ('%s create ' % ARCCONF) + controller \
                 + ' LOGICALDRIVE ' + size + ' ' + raid_level \
                 + ' ' + disklist + ' noprompt'
+            report, _e = utils.execute(cmd, shell=True)
+            ld_num1 = report.split('\n')[2].split()[-1]
+            report1, _e = utils.execute(('%s getconfig ' %
+                                         ARCCONF + controller +
+                                         ' ld ' + ld_num1 +
+                                         '|grep -i size'), shell=True)
+            ld_size = report1.split('\n')[1].split()[-2]
+            target_raid_config['logical_disks'][ld_num]['size_gb'] = int(ld_size)/1024
             ld_num += 1
             if raid_level is not None and physical_disks \
                     is not None and controller is not None:
                 LOG.info('Raid Configuration Command:%s', cmd)
-                report, _e = utils.execute(cmd, shell=True)
                 LOG.info('System Reaction:%s', report)
             else:
                 LOG.info(
@@ -158,7 +164,8 @@ class ArcconfHardwareManager(hardware.GenericHardwareManager):
 
     def delete_configuration(self, node, ports):
         controller = '1'
-        cmd = ('%s delete ' % ARCCONF) + controller + ' LOGICALDRIVE ALL noprompt'
+        cmd = ('%s delete ' % ARCCONF) + controller + \
+            ' LOGICALDRIVE ALL noprompt'
         report, _e = utils.execute(cmd, shell=True)
         return
 
